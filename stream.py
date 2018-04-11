@@ -1,7 +1,8 @@
+import os
 import pygame.camera
 import pygame.image
 import sys
-import os
+import thread
 
 class Camera:
 
@@ -19,6 +20,7 @@ class Camera:
            sys.exit()
         else:
             print "Camera {0} loaded in {1} attempts.".format(cameras[0], count)
+            
         self.width = width
         self.height = height
         self.webcam = pygame.camera.Camera(cameras[0], (self.width, self.height), "RGB")
@@ -29,6 +31,7 @@ class Camera:
         img = self.webcam.get_image()
         width = img.get_width()
         height = img.get_height()
+        
         return (width, height)
         
     def start_display(self):
@@ -46,21 +49,35 @@ class Camera:
         print "Exiting..."
         pygame.display.quit()
         self.webcam.stop()
-        
+
+class CameraRunner:
+    
+    def __init__(self, id):
+        #id: int
+        width = 640
+        height = 480
+        self.cam = Camera(width, height)
+        print "Runner{0}: Stream dimensions are {1}.".format(id, self.cam.get_dimensions())
+    
+    def start(self):
+        self.cam.start_display()
+        while True :
+            for e in pygame.event.get() :
+                if e.type == pygame.QUIT :
+                    self.cam.stop()
+                    sys.exit()
+            
+            self.cam.refresh_display()
         
 if __name__ == "__main__":
     os.environ['PYGAME_CAMERA'] = 'opencv'
     print "Starting Watcher..."
-    width = 640
-    height = 480
-    cam = Camera(width, height)
-    print "Stream dimensions are {0}.".format(cam.get_dimensions())
-    cam.start_display()
-
-    while True :
-        for e in pygame.event.get() :
-            if e.type == pygame.QUIT :
-                cam.stop()
-                sys.exit()
-        
-        cam.refresh_display()
+    
+    # create a runner
+    runner1 = CameraRunner(1)
+    
+    # create a thread for the camera
+    runner1.start()
+    
+    while True:
+        pass
